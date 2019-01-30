@@ -1,0 +1,108 @@
+<aura:component controller="P2EcCreateLead" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickActionWithoutHeader,force:hasSObjectName" access="global">
+	<aura:attribute name="recordId" type="Id" />
+    <aura:attribute name="LeadId" type="Id" />
+    <aura:attribute name="record" type="Object"/>
+    <aura:attribute name="message" type="String"/>
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+   
+
+    <div class="slds-grid slds-grid_vertical ">
+  
+  <div class="slds-col slds-text-align_center" style="padding:30px;">
+    <span> <lightning:button variant="success"  aura:id="action" label="OK" onclick="{!c.simplified}"/>   </span>
+  </div>
+  <div style="padding:30px;" class="slds-col slds-text-align_center">
+    <span><h1 class="h1Class">{!v.message}</h1></span>
+  </div>
+</div> 
+    
+  
+</aura:component>
+
+------------------------------------------
+JS COntroller
+------------------------------------------
+({
+    doInit: function(cmp, event, helper) {
+        var opId = cmp.get('v.recordId');
+        var action = cmp.get("c.createLead");
+       // alert('-'+opId);
+        action.setParams({
+            "oppid": opId
+        });
+        
+        action.setCallback(this, function(response) {
+            if (response.getState() === "SUCCESS") {                
+                if(response.getReturnValue() == "") {         
+                    cmp.set("v.message", "Primary contact should exists for creating a lead.");
+                } else {     
+                    cmp.set("v.message",'Lead has been created successfully !!!!');
+                    cmp.set('v.LeadId',response.getReturnValue());                    
+                }
+            }       
+        });
+        $A.enqueueAction(action);
+    },
+    simplified: function(cmp, event, helper) {
+       
+        if(cmp.get('v.LeadId')!='' && cmp.get('v.LeadId')!=null){
+            var sObjectEvent = $A.get("e.force:navigateToSObject");
+            sObjectEvent.setParams({
+                "recordId":cmp.get('v.LeadId'),
+                "slideDevName": "detail"
+            });
+            sObjectEvent.fire();
+        }else{
+            $A.get("e.force:closeQuickAction").fire();
+            $A.get("e.force:refreshView").fire();
+        }
+    }
+})
+
+----------------------------------------------------
+Apex
+----------------------------------------------------
+Global  class P2EcCreateLead{
+ //  public opportunity o {get;set;}   
+ //  public contact c {get;set;}
+   @AuraEnabled
+   webservice static string createLead(string  oppid){
+      // system.debug('soql  --' + oppid+'--' + [SELECT id,accountid  FROM opportunity WHERE id =: oppid]); 
+     opportunity o = [SELECT id,accountid  FROM opportunity WHERE id =: oppid];  
+     contact c; 
+     try{   
+     c = [SELECT id,firstname, lastname, name,Primary__c,account.name,phone,email,MailingStreet,MailingCity,MailingState,MailingPostalCode,MailingCountry,MailingLatitude,MailingLongitude FROM Contact WHERE AccountId =: o.accountid AND Primary__c = True limit 1];
+     system.debug('contact  ' + c); 
+     system.debug('contact  ' + c.account.name); 
+     }
+     catch(exception e){
+        c = null;
+     }
+     if(c!=NULL){
+         Lead ld = new Lead();
+         ld.firstName = c.FirstName;
+         ld.lastName = c.LastName;
+         ld.Company = c.account.name;
+         ld.Status = 'Open';
+         ld.Phone = c.phone;
+         ld.email = c.email;
+         ld.Street= c.MailingStreet;
+         ld.City = c.MailingCity;
+         ld.State = c.MailingState;
+         ld.PostalCode = c.MailingPostalCode;
+         ld.Country = c.MailingCountry;
+         insert ld;
+         
+         System.debug('Created Lead' + ld); 
+      
+         return ld.id;  
+     }
+     else{
+         return ''; 
+     }    
+      
+   }
+
+   
+
+}
