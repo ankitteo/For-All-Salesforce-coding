@@ -1,3 +1,6 @@
+Clone a division and validate if the division number is not used before under same parent record
+************************************************************************************************
+
 <aura:component controller="GCcDivisionClone" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickActionWithoutHeader,lightning:actionOverride" access="global">
     <aura:attribute name="ContractId" type="String"/>
     <aura:attribute name="recordId" type="Id"/>
