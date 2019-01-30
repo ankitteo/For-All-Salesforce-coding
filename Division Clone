@@ -1,0 +1,383 @@
+<aura:component controller="GCcDivisionClone" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickActionWithoutHeader,lightning:actionOverride" access="global">
+    <aura:attribute name="ContractId" type="String"/>
+    <aura:attribute name="recordId" type="Id"/>
+    <aura:handler name="init" value="{! this }" action="{! c.init }"/>
+    <aura:attribute name="disabled" type="Boolean" default="false" />
+    <aura:attribute name="simpleRecord" type="Object"/>
+    <aura:attribute name="simpleRecordDiv" type="Object"/>
+    <aura:attribute name="DivisionObj" type="Segmentation__c" default="{'sobjectType':'Segmentation__c'}"/>
+    <aura:attribute name="recordError" type="String"/>
+    <aura:attribute access="private" name="error" type="String" default=""/>
+    
+    <lightning:overlayLibrary aura:id="overlayLib"/>
+    <lightning:notificationsLibrary aura:id="notificationsLibrary"/>
+    
+    
+    
+    
+    <force:recordData aura:id="recordLoaderDiv"
+                      recordId="{!v.recordId}"
+                      layoutType="FULL"
+                      fields="Effective_Date__c,End_Date__c,Contract__c,Contract__r.Account_Type__c,Contract__r.ProcessType__c,Contract__r.ProcessType__c,Contract__r.Billing_Start_Date__c,Contract__r.Simplified_Group__c,Contract__r.EndDate"
+                      targetFields="{!v.simpleRecordDiv}"
+                      recordUpdated='{!c.handleRecordUpdate}'
+                      />
+  
+	<div class="slds-text-heading_large" style=' text-align:center '>
+		Clone Division
+    </div>
+    <!-- <div >
+    	<h1 class="errorStyleClass"><ui:outputText value="" aura:id="errorMessage"/></h1>
+    </div>-->
+    <hr/>
+   <lightning:recordEditForm aura:id="DivisionForm"                         
+                              objectApiName="Segmentation__c"  
+                              recordId="{!v.recordId}">
+        <!--  the messages component is for error messages 
+        <lightning:messages />  --> 
+       <div aura:id="errortext" class="slds-notify_container slds-is-relative" style='display:none;'>
+           <div role="alert" class="slds-notify slds-notify_toast slds-theme_error">
+               <div class="slds-notify__content">
+                   <ui:outputtext aura:id='ErrorMessage'/>
+               </div>
+           </div>
+       </div>
+        <div class="slds-grid slds-wrap slds-container--large" > 
+            <div class=" slds-col slds-size_1-of-2 slds-p-around_small">
+                <span class="required">*</span>   
+                <lightning:inputField fieldName="Name" required="true" aura:id="Name"/>        
+            </div>
+            
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small"> 
+                <ui:inputText label="Division #" class="field" required="true" aura:id="DivNumber" />      
+            </div>
+            
+            
+            
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Effective_Date__c" aura:id="EffectiveDate" value="{!v.simpleRecordDiv.Contract__r.Billing_Start_Date__c}" disabled="{! !((v.simpleRecordDiv.Contract__r.ProcessType__c =='Renewal' || v.simpleRecordDiv.Contract__r.ProcessType__c =='New') &amp;&amp; v.simpleRecordDiv.Contract__r.Simplified_Group__c==true)}"/> 
+            </div>
+            
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="End_Date__c" aura:id="EndDate" value="{!v.simpleRecordDiv.Contract__r.EndDate}" disabled="{!v.simpleRecordDiv.Contract__r.ProcessType__c =='Change' || v.simpleRecordDiv.Contract__r.Simplified_Group__c ==false}"/> 
+            </div>
+                          
+            
+            
+             <div class=" slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Division_Contract_Name__c" aura:id="DivConNumber" /> 
+            </div>
+             <div class=" slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Renewal_Date__c" aura:id="RenewDate"/> 
+            </div>
+            
+             <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Classification__c" aura:id="Classification"/> 
+            </div>
+            
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Contractual_Renewal_Clause__c" aura:id="ConRenClause"/> 
+            </div>
+            
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Exempt_From_Interest__c" aura:id="ExemptFromInt"/> 
+            </div>
+              <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Division_Effective_Date__c" aura:id="DivEffDate"/> 
+            </div>
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Underwritten_By__c" aura:id="UnderWritten"/> 
+            </div>
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Division_Termination_Date__c" aura:id="DivTermDate"/> 
+            </div>
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Regulatory_Agency__c" aura:id="RegAgency"/> 
+            </div>
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Filing_Limit_Exception_Days__c" aura:id="FilingLimit"/> 
+            </div>
+             <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Financial_Market_Code__c" aura:id="FinMarketCode"/> 
+            </div>
+             <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Run_Out_Exception_Period_Months__c" aura:id="ROException"/> 
+            </div>
+             <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="ERISA__c" aura:id="ERISA"/> 
+            </div>
+             <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="PDF_Summary_in_EBD__c" aura:id="PDFSummary"/> 
+            </div>
+             <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="NAICS__c"/> 
+            </div>
+            <aura:if isTrue="{!v.ContractId !=null}">
+                <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                    <lightning:inputField fieldName="ON_OFF_Exchange__c" aura:id="OnOffExchange" disabled="{!v.simpleRecordDiv.Contract__r.Account_Type__c != 'Medical Partners' &amp;&amp; v.simpleRecord.Account_Type__c != 'HCR Exchange'}"/> 
+                </div>
+                <aura:set attribute="else"> 
+                    <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                        <lightning:inputField fieldName="ON_OFF_Exchange__c" aura:id="OnOffExchange" disabled="{!v.simpleRecordDiv.Contract__r.Account_Type__c != 'Medical Partners' &amp;&amp; v.simpleRecordDiv.Contract__r.Account_Type__c != 'HCR Exchange'}"/> 
+                    </div>
+                </aura:set>
+            </aura:if>
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Industry_Type__c"/> 
+            </div>
+             <aura:if isTrue="{!v.ContractId !=null}">
+                    <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                        <lightning:inputField fieldName="Embedded_or_Bundled__c" aura:id="EmbedOrBun" disabled="{!v.simpleRecordDiv.Contract__r.Account_Type__c != 'Medical Partners'}"/> 
+                    </div>
+                    <aura:set attribute="else">
+                        <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                            <lightning:inputField fieldName="Embedded_or_Bundled__c" aura:id="EmbedOrBun" disabled="{!v.simpleRecordDiv.Contract__r.Account_Type__c != 'Medical Partners'}"/> 
+                        </div>
+                    </aura:set>
+                </aura:if>
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Account_Manager_Name_Code__c" aura:id="AccManager"/> 
+            </div>
+             <aura:if isTrue="{!v.ContractId !=null}">
+                    <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                        <lightning:inputField fieldName="Program_Classification__c" aura:id="ProgClassification" disabled="{!v.simpleRecordDiv.Contract__r.Account_Type__c != 'Medical Partners' &amp;&amp; v.simpleRecord.Account_Type__c != 'HCR Exchange'}"/> 
+                    </div>
+                    <aura:set attribute="else">
+                        <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                            <lightning:inputField fieldName="Program_Classification__c" aura:id="ProgClassification" disabled="{!v.simpleRecordDiv.Contract__r.Account_Type__c != 'Medical Partners' &amp;&amp; v.simpleRecordDiv.Contract__r.Account_Type__c != 'HCR Exchange'}"/> 
+                        </div>
+                    </aura:set>
+                </aura:if>
+             <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="HCR_Plan_ID__c" aura:id="HCRPlanID"/> 
+            </div>
+             <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                        <lightning:inputField fieldName="Transferred_From_Group_Division__c" aura:id="TransferredFrom"/> 
+            </div>
+             <aura:if isTrue="{!v.ContractId !=null}">
+                    <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                        <lightning:inputField fieldName="Medicare_Account_Sub_Type__c" aura:id="MedicareAccount" disabled="{!v.simpleRecordDiv.Contract__r.Account_Type__c != 'Medicare'}"/> 
+                    </div>
+                    <aura:set attribute="else">
+                        <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                            <lightning:inputField fieldName="Medicare_Account_Sub_Type__c" aura:id="MedicareAccount" disabled="{!v.simpleRecordDiv.Contract__r.Account_Type__c != 'Medicare'}"/> 
+                        </div>
+                    </aura:set>
+                </aura:if>
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Transferred_to_Group_Division__c" aura:id="TransferredTo"/> 
+            </div>
+             <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Required_Participation_Empl_Members__c" aura:id="RequiredParticipation"/> 
+            </div>
+             <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Ceded_Business__c" aura:id="CededBusiness"/> 
+            </div>
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Ceded_To__c" aura:id="CededTo"/> 
+            </div>
+            
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Contract__c" disabled="true" aura:id="Contract"/> 
+            </div>
+            <div class="slds-col slds-size_1-of-2 slds-p-around_small">
+                <lightning:inputField fieldName="Account__c" disabled="true" aura:id="Acc" /> 
+            </div>
+        
+        <div class="slds-docked-form-footer">
+            <lightning:button aura:id='SaveButton' variant="brand" type="submit" name="save" label="Save" onclick="{!c.Save}"/>             
+            <lightning:button name="cancel" label="Cancel" onclick="{!c.handleCancel}"/>
+        </div>   
+            </div>    
+   </lightning:recordEditForm>       -  
+</aura:component>
+
+
+
+--------------------------------------------------------------------------------
+Controller
+--------------------------------------------------------------------------------
+({
+    init : function(component,event,helper){
+        console.log('updated..12514666');
+        
+    },
+    handleRecordUpdate : function(component, event) {
+        var Action=component.get('c.checkGroupLocked');
+        
+        Action.setParams({
+            'contractId':component.get('v.simpleRecordDiv').Contract__c,
+        });
+        Action.setCallback(this, function(response) {
+            var state = response.getState(); 
+            if (state === "SUCCESS" ) {
+                if(response.getReturnValue() == true){
+                    var button=component.find('SaveButton');
+                     button.set('v.disabled',true);
+                }
+            }
+        });
+        $A.enqueueAction(Action);
+    },
+    handleSuccess : function(component, event, helper) {
+        //var payload = event.getParams().response;
+        console.log('updated..2');
+    },
+    handleOnError : function(component) {
+        //closes the modal or popover from the component
+        console.log('errror : ');
+    },
+    Save : function(component,event,helper){
+        console.log('updated..3');
+        var divobj = component.get('v.DivisionObj');
+        console.log('updated..4');
+        divobj.Name = component.find('Name').get('v.value');
+        divobj.MTV_DivisionNumber__c = component.find('DivNumber').get('v.value');
+        divobj.Effective_Date__c = component.find('EffectiveDate').get('v.value');
+        divobj.End_Date__c = component.find('EndDate').get('v.value');
+        divobj.Division_Contract_Name__c = component.find('DivConNumber').get('v.value');
+        divobj.Renewal_Date__c = component.find('RenewDate').get('v.value');
+        divobj.Classification__c = component.find('Classification').get('v.value');
+        divobj.Contractual_Renewal_Clause__c = component.find('ConRenClause').get('v.value');
+        divobj.Exempt_From_Interest__c = component.find('ExemptFromInt').get('v.value');
+        divobj.Division_Effective_Date__c = component.find('DivEffDate').get('v.value');
+        divobj.Underwritten_By__c = component.find('UnderWritten').get('v.value');
+        divobj.Division_Termination_Date__c = component.find('DivTermDate').get('v.value');
+        divobj.Regulatory_Agency__c = component.find('RegAgency').get('v.value');
+        divobj.Filing_Limit_Exception_Days__c = component.find('FilingLimit').get('v.value');
+        divobj.Financial_Market_Code__c = component.find('FinMarketCode').get('v.value');
+        divobj.Run_Out_Exception_Period_Months__c = component.find('ROException').get('v.value');
+        divobj.ERISA__c = component.find('ERISA').get('v.value');
+        divobj.PDF_Summary_in_EBD__c = component.find('PDFSummary').get('v.value');
+        divobj.ON_OFF_Exchange__c = component.find('OnOffExchange').get('v.value');
+        divobj.Embedded_or_Bundled__c = component.find('EmbedOrBun').get('v.value');
+        divobj.Account_Manager_Name_Code__c = component.find('AccManager').get('v.value');
+        divobj.Program_Classification__c = component.find('ProgClassification').get('v.value');
+        divobj.HCR_Plan_ID__c = component.find('HCRPlanID').get('v.value');
+        divobj.Transferred_From_Group_Division__c = component.find('TransferredFrom').get('v.value');
+        divobj.Medicare_Account_Sub_Type__c = component.find('MedicareAccount').get('v.value');
+        divobj.Transferred_to_Group_Division__c = component.find('TransferredTo').get('v.value');
+        divobj.Required_Participation_Empl_Members__c = component.find('RequiredParticipation').get('v.value');
+        divobj.Ceded_Business__c = component.find('CededBusiness').get('v.value');
+        divobj.Ceded_To__c = component.find('CededTo').get('v.value');
+        divobj.Account__c = component.find('Acc').get('v.value');
+        divobj.Contract__c = component.find('Contract').get('v.value');
+        component.set('v.DivisionObj',divobj);
+        console.log('new div '+JSON.stringify(component.get('v.DivisionObj')));
+        var Action=component.get('c.CloneDivision');
+        
+        Action.setParams({
+            'DivObj':component.get('v.DivisionObj'),
+            'OldId':component.get('v.recordId')
+        });
+        Action.setCallback(this, function(response) {
+            var state = response.getState();
+            console.log('updated..8' +state);
+            
+            if (state === "SUCCESS" ) {
+                var result =  response.getReturnValue();
+                console.log('1111111111111111111111111' +JSON.stringify(result));
+                if(result['Success']==true){
+                    console.log("Success + " + response.getReturnValue());
+                    var navEvt = $A.get("e.force:navigateToSObject");
+                    navEvt.setParams({
+                        "recordId": result['ResponseString'],
+                        "slideDevName": "related"
+                    });
+                    navEvt.fire();
+                }else{
+                    var errorMsg = result['ResponseString'].split(',')[1].split(':')[0];
+                    var toggleText = component.find("errortext");
+                    $A.util.addClass(toggleText, 'changeMe');
+                    component.find('ErrorMessage').set('v.value',errorMsg);
+                }
+            }
+            else{
+                //console.log();
+               // var toggleText = component.find("errorMessage");
+               // toggleText.set("v.value","Errror 123");
+       			
+            }
+        });
+        $A.enqueueAction(Action);
+    },
+    handleCancel : function(component) {
+        //closes the modal or popover from the component
+        component.find("overlayLib").notifyClose();
+    }
+})
+
+--------------------------------------------------------
+Apex
+--------------------------------------------------------
+public  with sharing class GCcDivisionClone {
+    @AuraEnabled
+    public static boolean checkGroupLocked(string contractId){
+         Set<id> GIids= new set<id>{contractId};
+        if(GChObjectTriggerHelper.getGroupsLockedforEdit(GIids).size()>0){
+            return true;
+        }
+        return false;
+    }
+     @AuraEnabled
+    public static Segmentation__c getDivDetail(string recordId){
+        return (Segmentation__c)database.query('select Name,Division_Contract_Name__c,Renewal_Date__c,Classification__c,Contractual_Renewal_Clause__c,Exempt_From_Interest__c,Division_Effective_Date__c,Underwritten_By__c,Division_Termination_Date__c,Regulatory_Agency__c,Filing_Limit_Exception_Days__c,Financial_Market_Code__c,Run_Out_Exception_Period_Months__c,ERISA__c,PDF_Summary_in_EBD__c,ON_OFF_Exchange__c,Contract__r.Embedded_or_Bundled__c,Contract__r.Program_Classification__c,HCR_Plan_ID__c,Transferred_From_Group_Division__c,Medicare_Account_Sub_Type__c,Transferred_to_Group_Division__c,Required_Participation_Empl_Members__c,Ceded_Business__c,Ceded_To__c,Contract__c,Account__c'
+			+',Effective_Date__c,End_Date__c,Contract__r.Account_Type__c,Contract__r.ProcessType__c,Contract__r.Billing_Start_Date__c,Contract__r.Simplified_Group__c,Contract__r.EndDate from Segmentation__c where id=:recordId  ')[0];
+    }
+    @AuraEnabled
+    public static wrapperDisplayController CloneDivision(Segmentation__c DivObj,string OldId){
+        wrapperDisplayController WDC = new wrapperDisplayController();
+        try{
+            insert DivObj;
+            system.debug('DivObj-->'+DivObj.id);
+            DescribeSObjectResult describeResult = ApplyTo__c.getSObjectType().getDescribe();   
+            List<String> fieldNames = new List<String>( describeResult.fields.getMap().keySet() );
+            
+            List<ApplyTo__c> ApplytoOld = database.query('Select '+ String.join( fieldNames, ',' )+' from ApplyTo__c where Division__c =:OldId and RuleType__c Not IN (\'Billing Entity\',\'Group Contact Relationship\')');
+            List<ApplyTo__c> newList=new List<Applyto__c>();
+            for(ApplyTo__c CloneRec:ApplytoOld)
+            {
+                ApplyTo__c ApplytoIns= CloneRec.clone();
+                ApplytoIns.Division__c=DivObj.id;
+                newList.add(ApplytoIns);
+            }
+            system.debug('newList-->'+newList);
+            insert newList; 
+            WDC.ResponseString= DivObj.id;
+            WDC.Success=True;       
+        }
+        
+        catch(Exception e)
+        {
+            WDC.ResponseString= e.getMessage();
+            WDC.Success=False;
+            
+           // throw new AuraHandledException('Exception occured:\r\n' + e.getMessage() + '\r\n' + e.getStackTraceString() + '\r\n');
+        }
+        return WDC;
+    }
+    
+    public class wrapperDisplayController 
+    {
+        @AuraEnabled
+        Public String ResponseString;
+        @AuraEnabled
+        Public boolean Success;
+        
+        
+    }
+}
+
+-------------------------------------------
+Style
+-------------------------------------------
+.THIS .slds-docked-form-footer{
+    margin: 0 0 105px;
+}
+.THIS .errorStyleClass{
+    color: red !important;
+    text-align: center;
+}
+.THIS .changeMe {
+    display:block !important;
+}
