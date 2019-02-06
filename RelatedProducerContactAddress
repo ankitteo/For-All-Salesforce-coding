@@ -1,0 +1,474 @@
+<aura:component controller="GCcGroupProducerDetailPage" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickActionWithoutHeader,lightning:actionOverride" access="global">
+    <aura:handler name="init" value="{! this }" action="{! c.init }"/>
+    
+    <ltng:require styles="{!$Resource.LightningModalWidthEnhancer}" />
+    
+    
+    <aura:attribute name="ContactData" type="Object[]" access="public"/>
+    <aura:attribute name="ProducerData" type="Object[]" access="public"/>
+    <aura:attribute name="AddressData" type="Object[]" access="public"/>
+    <aura:attribute name="deleteDivData" type="Object"/>
+    <aura:attribute name="columns" type="Object"/>
+    <aura:attribute name="selectedRowsCount" type="Integer" default="0"/>
+    <aura:attribute name="selectedRowsDetails" type="Object" />
+    <aura:attribute name="selectedRowsList" type="List" />
+    <aura:attribute name="maxRowSelection" type="Integer" default="10"/>
+    <aura:attribute name="selectedRows" type="List" />
+    <aura:attribute name="enableInfiniteLoading" type="Boolean" default="true"/>
+    <aura:attribute name="initialRows" type="Integer" default="10"/>
+    <aura:attribute name="rowsToLoad" type="Integer" default="5"/>
+    <aura:attribute name="totalNumberOfRows" type="Integer"/>
+    <aura:attribute name="loadMoreStatus" type="String" default="Please scroll down to load more data"/>
+    <aura:attribute name="showRowNumberColumn" type="Boolean" default="false"/>
+    <aura:attribute name="rowNumberOffset" type="Integer" default="0"/>
+    <aura:attribute name="loadMoreOffset" type="Integer" default="20"/>
+    <aura:attribute name="rowsToAdd" type="Integer" default="10"/>
+    <aura:attribute name="currentCount" type="Integer" default="10"/>
+    <aura:attribute name="sortedBy" type="String"/>
+    <aura:attribute name="appvlstatus" type="String"/>
+    <aura:attribute name="sortedDirection" type="String"/>
+    <aura:attribute name="defaultSortDirection" type="String"/>
+    <aura:attribute name="isOpen" type="boolean" default="false"/>
+    <lightning:overlayLibrary aura:id="overlayLib"/>
+    
+    <aura:attribute name="recordError" type="String"/>
+    <aura:attribute name="recordInfo" type="Object" />
+        
+    <div class="slds-card_boundary">
+        <article class="slds-card">
+            <div class="slds-card__header slds-grid">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__figure">
+                        <span class="slds-icon_container slds-icon-standard-contact" title="contact">                        
+                            <lightning:icon iconName="standard:timesheet" size="medium" /><span class="slds-assistive-text"></span>
+                        </span>
+                    </div>
+                    <div class="slds-media__body">
+                        <h2 class="slds-card__header-title">
+                            <a href="javascript:void(0);" class="slds-card__header-link slds-truncate" title="Producer Contact/Address">
+                                <span>Producer Addresses ({!v.totalNumberOfRows})</span>
+                            </a>
+                        </h2>
+                    </div>
+                </header>
+            </div>    
+            <div class="slds-card__body" style="{!'display : '+ if(v.ContactData.length > 0 || v.ProducerData.length>0 || v.AddressData.length>0,'Block;','None;') + 'Text-align:center;'}">
+                               
+                <c:DataGrid data="{!v.AddressData}" columns="{!v.columns.Producer_Address_In_Related_List}" pkField="Id" aura:Id="dataGrid"/>
+                <!-- 
+                <div class="slds-card__footer">
+                    <a class="slds-card__footer-action" href="{!'/lightning/r/'+v.recordId+'/related/Group_Producer_Relationships__r/view'}">
+                        View All                        
+                    </a>                    
+                </div>  
+				-->                              
+            </div>
+            
+            <div class="slds-card__header slds-grid">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__figure">
+                        <span class="slds-icon_container slds-icon-standard-contact" title="contact">                        
+                            <lightning:icon iconName="standard:timesheet" size="medium" /><span class="slds-assistive-text"></span>
+                        </span>
+                    </div>
+                    <div class="slds-media__body">
+                        <h2 class="slds-card__header-title">
+                            <a href="javascript:void(0);" class="slds-card__header-link slds-truncate" title="Producer Contact/Address">
+                                <span>Producer Contacts ({!v.totalNumberOfRows})</span>
+                            </a>
+                        </h2>
+                    </div>
+                </header>
+            </div>    
+            <div class="slds-card__body" style="{!'display : '+ if(v.ContactData.length > 0 || v.ProducerData.length>0 || v.AddressData.length>0,'Block;','None;') + 'Text-align:center;'}">
+                
+                <c:DataGrid data="{!v.ContactData}" columns="{!v.columns.Producer_Contact_In_Related_List}" pkField="Id" aura:Id="dataGrid"/>
+                <!-- 
+                <div class="slds-card__footer">
+                    <a class="slds-card__footer-action" href="{!'/lightning/r/'+v.recordId+'/related/Group_Producer_Relationships__r/view'}">
+                        View All                        
+                    </a>                     
+                </div>   
+				-->                              
+            </div>
+        </article> 
+        
+    </div>
+</aura:component>
+------------------------------------------
+JS Controller
+------------------------------------------
+({
+    init : function(component, event, helper) {
+        var recordId = component.get("v.recordId"); 
+        helper.getColumns(component, event);
+        helper.getGPR(component);
+    },
+    handleShowModal: function(component) {
+        var modalBody;
+         var RecordIdVal = component.get("v.recordId"); 
+        $A.createComponent("c:GClcDivisionPageComp",{'ContractId' : component.get("v.recordId"),'isNew':true},
+            function(content, status) {
+                if (status === "SUCCESS") {
+                    modalBody = content;
+                    component.find('overlayLib').showCustomModal({    
+                        //header: "New Division",
+                        body: modalBody, 
+                        showCloseButton: true,
+                        //cssClass: "mymodal",
+                        closeCallback: function() {                          
+                        }
+                    })
+                }                               
+            }
+        );
+    }, 
+    handleColumnSorting: function (component, event, helper) {
+        var fieldName = event.getParam('fieldName');
+        var sortDirection = event.getParam('sortDirection');        
+        component.set("v.sortedBy", fieldName);
+        component.set("v.sortedDirection", sortDirection);
+        helper.sortData(component, fieldName, sortDirection);
+    },
+    closeModel: function(component, event, helper) {
+      // for Hide/Close Model,set the "isOpen" attribute to "Fasle"  
+       component.set("v.deleteDivData", null); 
+        component.set("v.isOpen", false);
+   },
+  deleteRecord: function(component, event, helper) {
+        // Display alert message on the click on the "Like and Close" button from Model Footer 
+        // and set set the "isOpen" attribute to "False for close the model Box.
+        helper.deleteDivRecord(component, event);
+        component.set("v.isOpen", false);
+    }
+})
+----------------------------------------------
+Helper
+----------------------------------------------
+({
+    getColumns: function(component, event) {
+        var RecordIdVal = component.get("v.recordId"); 
+        var action = component.get("c.getFieldSet");             
+        
+        action.setParams({
+            fieldSetApis : ['Producer_Address_In_Related_List', 'Producer_Contact_In_Related_List']
+        });
+        action.setCallback(this, function(response) {
+            var state = response.getState();
+            
+            if (state === "SUCCESS") {
+                var fieldSets = response.getReturnValue() || [];  
+                var columns = {};
+                
+                fieldSets.forEach((fieldSet) => {
+                    fieldSet.columns.forEach((column) => {
+                        if(column.types === "BOOLEAN") {
+                        	column.type = 'boolean';
+                		}
+                	}); 
+                    
+                    columns[fieldSet.fieldSetApi] = fieldSet.columns;
+                });
+                       
+                component.set("v.columns", columns);              
+            }
+        });
+        
+        $A.enqueueAction(action);
+    }, 
+    getGPR: function(component) {
+        var RecordIdVal = component.get("v.recordId"); 
+        var action = component.get("c.getAllGPRs");
+        action.setParams({
+            "recordLimit": component.get("v.initialRows"),
+            
+            "recordID":RecordIdVal
+        });
+        action.setCallback(this, function(response) {
+            var state = response.getState();
+            if (state === "SUCCESS" ) {
+                var resultData = response.getReturnValue();
+                var contact = [];
+                var producer = [];
+                var address = [];
+                for(var i=0;i<resultData.length;i++){
+                    console.log('-->' + JSON.stringify(resultData[i]));
+                    if(resultData[i].RecordType.Name == 'Contact'){
+                        contact.push(resultData[i]);
+                       
+                    }else {
+                        address.push(resultData[i]);
+                    }
+                }
+                 component.set("v.ContactData", contact);
+                 component.set("v.AddressData", address);
+                 //component.set("v.ProducerData", producer);
+                
+                component.set("v.currentCount", component.get("v.initialRows"));
+                this.getTotalNumberOfDiv(component);
+            }
+        });
+        $A.enqueueAction(action);
+    }, 
+    getTotalNumberOfDiv : function(component) {
+        var RecordIdVal = component.get("v.recordId"); 
+        var action = component.get("c.getTotalGPRs");
+        action.setParams({         
+            "recordID":RecordIdVal
+        });
+        action.setCallback(this, function(response) {
+            var state = response.getState();
+            if (state === "SUCCESS" ) {
+                var resultData = response.getReturnValue();
+                component.set("v.totalNumberOfRows", resultData);
+            }
+        });
+        $A.enqueueAction(action);
+    },  
+    
+    sortData: function (component, fieldName, sortDirection) {
+        var ContactData = component.get("v.ContactData");
+        
+        ContactData.sort(this.sortBy(fieldName, sortDirection !== 'asc'));
+        component.set("v.ContactData", ContactData);
+        
+        var ProducerData = component.get("v.ProducerData");
+        
+        ProducerData.sort(this.sortBy(fieldName, sortDirection !== 'asc'));
+        component.set("v.ProducerData", ProducerData);
+        
+        var AddressData = component.get("v.AddressData");
+        
+        AddressData.sort(this.sortBy(fieldName, sortDirection !== 'asc'));
+        component.set("v.AddressData", AddressData);
+    }
+})
+-----------------------------------
+Apex
+-----------------------------------
+/***************************************************************
+@Author: Vignesh Paranthaman
+@Action: Created
+@Date: 04-Feb-2019
+@Desc:Group Producer Relationship Creation and edit of Producer Address and Producer Contact 
+@Comments & Updated on :  
+* @Updated by :
+
+****************************************************************/
+
+
+public class GCcGroupProducerDetailPage {
+    
+    @AuraEnabled 
+    public static List<produceraddressListWrapper> getProducerAddress(string recordid){  
+        
+        List<produceraddressListWrapper> lstproduceraddressListWrapper = new List<produceraddressListWrapper>();    
+        Group_Producer_Relationships__c prodAcc = [SELECT id,Name,Account__c FROM Group_Producer_Relationships__c where id=:recordid];
+        string AccId =prodAcc.Account__c;
+        
+        Map<String,Group_Producer_Relationships__c> mp = new Map<String,Group_Producer_Relationships__c>();
+        
+        for(Group_Producer_Relationships__c grp :[select id,Producer_Address__c from Group_Producer_Relationships__c where Group_Producer_Relationship__c =: recordid]){
+            mp.put(grp.Producer_Address__c,grp);
+        }
+        
+        for(Producer_Address__c Prodaddrs : [SELECT id,Name,Address_Type__c,Site_Code__c,City__c,Street__c,Postal__c,Country__c,Producer__c FROM Producer_Address__c where Producer__c = :AccId]){        
+            if(mp.containsKey(Prodaddrs.Id))
+                lstproduceraddressListWrapper.add(new produceraddressListWrapper(true,Prodaddrs));   
+            else
+                lstproduceraddressListWrapper.add(new produceraddressListWrapper(false,Prodaddrs));   
+        }      
+        system.debug('lstproduceraddressListWrapper '+lstproduceraddressListWrapper);      
+        return lstproduceraddressListWrapper;
+    }
+    @AuraEnabled
+    public static List<producercontactListWrapper> getproducercontact(String recordIds) {     
+        
+        List<producercontactListWrapper> lstproducercontactListWrapper = new List<producercontactListWrapper>();
+        Group_Producer_Relationships__c prodAcc = [SELECT id,Name,Account__c FROM Group_Producer_Relationships__c where id=:recordIds];
+        string AccId =prodAcc.Account__c;
+        
+        Map<String,Group_Producer_Relationships__c> mp = new Map<String,Group_Producer_Relationships__c>();
+        
+        for(Group_Producer_Relationships__c grp :[select id,Producer_Contact__c from Group_Producer_Relationships__c where Group_Producer_Relationship__c =: recordIds]){
+            mp.put(grp.Producer_Contact__c,grp);
+        }
+        
+        for(Contact Prodcontact : [SELECT id,Name,State_License__c,MailingStreet,MailingCity,MailingStateCode,MailingPostalCode,MailingCountry,Contact_National_Producer_Number__c,MailingAddress,Phone,Email,Fax FROM Contact where AccountId = :AccId]){
+            // by default checkbox should be false 
+            if(mp.containsKey(Prodcontact.Id))
+                lstproducercontactListWrapper.add(new producercontactListWrapper(true,Prodcontact));
+            else
+                lstproducercontactListWrapper.add(new producercontactListWrapper(false,Prodcontact));
+        }
+        
+        // return the 'lstproducercontactListWrapper' list
+        
+        return lstproducercontactListWrapper;
+    }    
+    
+    
+    /* wrapper class */  
+    /* Producer Address */
+    
+    public class produceraddressListWrapper {
+        @AuraEnabled
+        public boolean isChecked{get;set;}
+        @AuraEnabled 
+        public Producer_Address__c objaddress{get;set;} 
+        
+        
+        public produceraddressListWrapper(boolean isChecked, Producer_Address__c objaddress){
+            this.isChecked = isChecked;
+            this.objaddress = objaddress;
+        }
+        
+    }
+    
+    /* Producer Contact */
+    public class producercontactListWrapper {
+        @AuraEnabled public boolean isChecked{get;set;}
+        @AuraEnabled public  Contact objcontact{get;set;}
+        public producercontactListWrapper(boolean isChecked, Contact objcontact){
+            this.isChecked = isChecked;
+            this.objcontact = objcontact;
+        }
+    }
+    @AuraEnabled
+    public static void addGPRrecords(String ParentId, List<String> idsToBeInsert, List<String> idsToBeDelete){
+        
+        /*system.debug('ParentId'+ParentId);
+        
+        set<ID> PAID =new set<ID>();
+        set<ID> PCID =new set<ID>();
+        system.debug('lstOfpaIds'+lstOfpaIds);*/
+        
+        //Id ProducerRecordTypeId = Schema.SObjectType.Group_Producer_Relationships__c.getRecordTypeInfosByName().get(System.Label.GCRecordType_GPR_Producer).getRecordTypeId();
+        
+        Id ContactRecordTypeId = Schema.SObjectType.Group_Producer_Relationships__c.getRecordTypeInfosByName().get(System.Label.GCRecordType_GPR_Contact).getRecordTypeId();
+        Id AddressRecordTypeId = Schema.SObjectType.Group_Producer_Relationships__c.getRecordTypeInfosByName().get(System.Label.GCRecordType_GPR_Address).getRecordTypeId();
+        List<Group_Producer_Relationships__c> lstproduceraddrs = new list<Group_Producer_Relationships__c>();
+        List<Group_Producer_Relationships__c> listOfGroupProducerToBeDelete = [SELECT Id, Producer_Address__c, Producer_Contact__c FROM Group_Producer_Relationships__c WHERE Producer_Address__c IN :idsToBeDelete OR Producer_Contact__c IN :idsToBeDelete];
+                       
+        /*list<Group_Producer_Relationships__c> prodAcc = [SELECT id,Name,Account__c,Producer_Contact__c,Group_Producer_Relationship__c,Producer_Address__c FROM Group_Producer_Relationships__c where Group_Producer_Relationship__c=:ParentId];
+        for(Group_Producer_Relationships__c gprlist:prodAcc){
+            
+            if(!String.isBlank(gprlist.Producer_Address__c)){
+                PAID.add(gprlist.Producer_Address__c);
+            }
+            if(!String.isBlank(gprlist.Producer_Contact__c)){
+                PCID.add(gprlist.Producer_Contact__c);
+            }
+        }
+        system.debug('PAID'+PAID);
+        system.debug('PCID'+PCID);
+        
+       
+        Set<Id> tempSet = new Set<Id>();
+        Set<Id> tempSet1 = new Set<Id>();
+
+        
+        for(String a:lstOfpaIds){
+            if(!PAID.contains(a)){
+               tempSet1.add(a); 
+            } 
+        }
+system.debug('tempSet2'+tempSet1);*/
+        
+                 //for(Id padrsId : tempSet1){       
+            for(Id padrsId : idsToBeInsert){
+                Group_Producer_Relationships__c newgpr = new Group_Producer_Relationships__c();
+                String sObjectType = padrsId.getSObjectType().getDescribe().getName();
+                
+                //newgpr.name = ProducerName;
+                newgpr.Group_Producer_Relationship__c= ParentId;
+                
+                if(sObjectType == 'Producer_Address__c') { 
+                    newgpr.Producer_Address__c=padrsId;
+                    newgpr.RecordTypeId=AddressRecordTypeId;
+                } else if(sObjectType == 'Contact') {
+                    newgpr.Producer_Contact__c=padrsId;
+                    newgpr.RecordTypeId=ContactRecordTypeId;
+                }
+                
+                lstproduceraddrs.add(newgpr);
+                system.debug('lstproduceraddrs'+lstproduceraddrs); 
+            }
+       // }
+        try{
+            insert lstproduceraddrs;
+            delete listOfGroupProducerToBeDelete;
+            system.debug('lstproduceraddrscreated'+lstproduceraddrs); 
+        }
+        catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+            
+        }
+    }
+    
+    @AuraEnabled
+    public static Integer getTotalGPRs(ID recordID){
+        AggregateResult results = [SELECT Count(Id) TotalGPRs From Group_Producer_Relationships__c where Group_Producer_Relationship__c =: recordID ];
+        Integer totalGPR = (Integer)results.get('TotalGPRs') ; 
+        return totalGPR;
+    } 
+    
+    @AuraEnabled
+    public static List<Group_Producer_Relationships__c> getAllGPRs(Integer recordLimit, ID recordID) {
+        Integer intLimit = Integer.valueof(recordLimit);
+        DescribeSObjectResult describeResult = Group_Producer_Relationships__c.getSObjectType().getDescribe();   
+        List<String> fieldNames = new List<String>( describeResult.fields.getMap().keySet() ); 
+        List<Group_Producer_Relationships__c> AllFields = database.query('Select '+ String.join( fieldNames, ',' )+',recordtype.name from Group_Producer_Relationships__c where Group_Producer_Relationship__c =:recordID limit :recordLimit ');
+        return AllFields;
+    }
+    
+    
+    // Method to get fields label and api from fieldset
+    @AuraEnabled
+    public static List<FieldSetWrapper> getFieldSet(List<String> fieldSetApis) {
+        List<FieldSetWrapper> fieldSets = new List<FieldSetWrapper>();   
+        
+        for(String fieldSetApi : fieldSetApis) {
+            FieldSetWrapper fieldSet = new FieldSetWrapper();
+            
+            fieldSet.fieldSetApi = fieldSetApi;
+            fieldSet.columns = fetchFieldSetByFieldSetApi(fieldSetApi);
+            
+            fieldSets.add(fieldSet);
+        }    
+        
+        return fieldSets;
+    }
+    
+     @AuraEnabled
+    public static List<WrapperClass> fetchFieldSetByFieldSetApi(String fieldSetApi) {
+        List<WrapperClass> fields = new List<WrapperClass>();   
+        List<Schema.FieldSetMember> fieldSetMemberList = P2EhUtility.readFieldSet(fieldSetApi,'Group_Producer_Relationships__c');      
+        
+        for(Schema.FieldSetMember fieldSetMemberObj : fieldSetMemberList) {
+            WrapperClass field = new WrapperClass();            
+            field.label = fieldSetMemberObj.getLabel();
+            field.value = fieldSetMemberObj.getFieldPath();
+            field.types = String.valueOf(fieldSetMemberObj.getType());
+            fields.add(field);
+        }  
+        
+        return fields;
+    }
+    
+    public class WrapperClass { 
+        @AuraEnabled 
+        public String label{get;set;} 
+        @AuraEnabled 
+        public String value{get;set;}
+         @AuraEnabled 
+        public String types{get;set;}
+    }
+    
+    public class FieldSetWrapper { 
+        @AuraEnabled 
+        public String fieldSetApi{get;set;} 
+        @AuraEnabled 
+        public List<WrapperClass> columns{get;set;}
+    }
+}
